@@ -1,5 +1,6 @@
 import json
 import logging
+import io
 from datetime import timedelta
 from minio import Minio
 from minio.error import S3Error
@@ -7,7 +8,6 @@ from minio.error import S3Error
 from app.config import settings
 
 logger = logging.getLogger(__name__)
-
 
 class S3Service:
     def __init__(self):
@@ -67,3 +67,22 @@ class S3Service:
 
     def get_photo_url(self, object_name: str, use_presigned: bool = False) -> str:
         return self.get_presigned_url(object_name) if use_presigned else self.get_public_url(object_name)
+    
+    async def upload_photo(self, photo_bytes: bytes) -> str:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        object_name = f"photos/{timestamp}.jpg"
+
+        try:
+            photo_stream = io.BytesIO(photo_bytes)
+            self.client.put_object(
+                bucket_name=self.bucket_name,
+                object_name=object_name,
+                data=photo_stream,
+                length=len(photo_bytes),
+                content_type="image/jpeg"
+            )
+            logger.info(f"Photo uploaded to S3: {object_name}")
+            return object_name
+        except S3Error as e:
+            logger.error(f"Error uploading photo to S3: {e}")
+            raise
