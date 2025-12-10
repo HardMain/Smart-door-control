@@ -20,4 +20,4 @@ async def root():
     return {
         "status": "ok",
         "message": "Smart Door Control API is running"
-    }
+}
