@@ -16,6 +16,11 @@ class Settings(BaseSettings):
 
     public_api_url: str = ""
 
+    sensors_enabled: bool = False
+    doorbell_button_pin: int = 17
+    door_lock_relay_pin: int = 27
+    door_lock_open_duration: int = 5
+
     class Config:
         env_file = ".env"
         case_sensitive = False
