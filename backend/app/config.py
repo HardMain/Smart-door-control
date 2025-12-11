@@ -8,8 +8,13 @@ class Settings(BaseSettings):
     minio_secret_key: str = "minioadmin"
     minio_bucket_name: str = "doorbell-photos"
     minio_secure: bool = False
-    
+
+    sensors_enabled: bool = False
+    doorbell_button_pin: int = 17
+    door_lock_relay_pin: int = 27
     camera_enabled: bool = False
+
+    door_lock_open_duration: int = 5
 
     api_host: str = "0.0.0.0"
     api_port: int = 8000
