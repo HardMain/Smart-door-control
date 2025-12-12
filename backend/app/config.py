@@ -21,6 +21,8 @@ class Settings(BaseSettings):
 
     public_api_url: str = ""
 
+    api_key: str = ""
+
     class Config:
         env_file = ".env"
         case_sensitive = False
