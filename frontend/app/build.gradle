@@ -1,11 +1,11 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace 'com.example.smartdoorcontrol'
+    namespace 'com.example.frontend'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.example.smartdoorcontrol"
+        applicationId "com.example.frontend"
         minSdk 24
         targetSdk 34
         versionCode 1
