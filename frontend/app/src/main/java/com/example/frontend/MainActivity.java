@@ -9,8 +9,14 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.biometric.BiometricManager;
+import androidx.biometric.BiometricPrompt;
 import androidx.cardview.widget.CardView;
+import androidx.core.content.ContextCompat;
+
+import java.util.concurrent.Executor;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.GlideException;
@@ -30,6 +36,10 @@ public class MainActivity extends AppCompatActivity {
     private ApiService apiService;
     private Visit currentVisit;
 
+    private BiometricPrompt biometricPrompt;
+    private BiometricPrompt.PromptInfo promptInfo;
+    private Executor executor;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,8 +55,10 @@ public class MainActivity extends AppCompatActivity {
 
         apiService = new ApiService();
 
+        setupBiometricAuthentication();
+
         ringButton.setOnClickListener(v -> handleRingDoorbell());
-        unlockButton.setOnClickListener(v -> handleUnlockDoor());
+        unlockButton.setOnClickListener(v -> authenticateAndUnlock());
     }
 
     private void handleRingDoorbell() {
@@ -70,6 +82,63 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(MainActivity.this, error, Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    private void setupBiometricAuthentication() {
+        executor = ContextCompat.getMainExecutor(this);
+
+        biometricPrompt = new BiometricPrompt(this, executor,
+                new BiometricPrompt.AuthenticationCallback() {
+                    @Override
+                    public void onAuthenticationError(int errorCode, @NonNull CharSequence errString) {
+                        super.onAuthenticationError(errorCode, errString);
+                        Toast.makeText(MainActivity.this,
+                                "Ошибка аутентификации: " + errString, Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onAuthenticationSucceeded(@NonNull BiometricPrompt.AuthenticationResult result) {
+                        super.onAuthenticationSucceeded(result);
+                        Toast.makeText(MainActivity.this,
+                                "Аутентификация успешна!", Toast.LENGTH_SHORT).show();
+                        handleUnlockDoor();
+                    }
+
+                    @Override
+                    public void onAuthenticationFailed() {
+                        super.onAuthenticationFailed();
+                        Toast.makeText(MainActivity.this,
+                                "Аутентификация не удалась", Toast.LENGTH_SHORT).show();
+                    }
+                });
+
+        promptInfo = new BiometricPrompt.PromptInfo.Builder()
+                .setTitle("Подтверждение личности")
+                .setSubtitle("Подтвердите, что это вы, чтобы открыть дверь")
+                .setNegativeButtonText("Отмена")
+                .build();
+    }
+
+    private void authenticateAndUnlock() {
+        BiometricManager biometricManager = BiometricManager.from(this);
+        switch (biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG | BiometricManager.Authenticators.DEVICE_CREDENTIAL)) {
+            case BiometricManager.BIOMETRIC_SUCCESS:
+                Log.d(TAG, "App can authenticate using biometrics.");
+                biometricPrompt.authenticate(promptInfo);
+                break;
+            case BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE:
+                Toast.makeText(this, "На устройстве нет биометрических датчиков", Toast.LENGTH_SHORT).show();
+                handleUnlockDoor();
+                break;
+            case BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE:
+                Toast.makeText(this, "Биометрические датчики недоступны", Toast.LENGTH_SHORT).show();
+                handleUnlockDoor();
+                break;
+            case BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED:
+                Toast.makeText(this, "Не зарегистрированы биометрические данные", Toast.LENGTH_SHORT).show();
+                handleUnlockDoor();
+                break;
+        }
     }
 
     private void handleUnlockDoor() {
