@@ -88,7 +88,7 @@ public class VisitAdapter extends RecyclerView.Adapter<VisitAdapter.VisitViewHol
             String photoUrl = visit.getPhotoUrl();
             if (photoUrl != null && !photoUrl.isEmpty()) {
                 if (photoUrl.startsWith("/")) {
-                    photoUrl = "http://192.168.0.110:8000" + photoUrl;
+                    photoUrl = ApiService.BASE_URL + photoUrl;
                 }
 
                 Glide.with(context)
