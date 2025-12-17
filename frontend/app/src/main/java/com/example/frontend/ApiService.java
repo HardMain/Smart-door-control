@@ -21,7 +21,7 @@ import okhttp3.Response;
 
 public class ApiService {
     private static final String TAG = "ApiService";
-    private static final String BASE_URL = "http://192.168.0.110:8000";
+    public static final String BASE_URL = "http://192.168.0.110:8000";
     private static final String API_KEY = "my-super-secret-key-12345";
 
     private final OkHttpClient client;

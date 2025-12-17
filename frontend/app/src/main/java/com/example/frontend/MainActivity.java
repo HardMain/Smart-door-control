@@ -1,5 +1,6 @@
 package com.example.frontend;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -58,7 +59,13 @@ public class MainActivity extends AppCompatActivity {
         setupBiometricAuthentication();
 
         ringButton.setOnClickListener(v -> handleRingDoorbell());
+
         unlockButton.setOnClickListener(v -> authenticateAndUnlock());
+
+        historyButton.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, VisitHistoryActivity.class);
+            startActivity(intent);
+        });
     }
 
     private void handleRingDoorbell() {
@@ -172,23 +179,33 @@ public class MainActivity extends AppCompatActivity {
         unlockButton.setVisibility(View.VISIBLE);
 
         String photoUrl = visit.getPhotoUrl();
-        Log.d(TAG, "Loading photo from URL: " + photoUrl);
+        if (photoUrl != null && !photoUrl.isEmpty() && photoUrl.startsWith("/")) {
+            photoUrl = ApiService.BASE_URL + photoUrl;
+        }
+        final String finalPhotoUrl = photoUrl;
+        Log.d(TAG, "Loading photo from URL: " + finalPhotoUrl);
 
         Glide.with(this)
-                .load(photoUrl)
+                .load(finalPhotoUrl)
                 .placeholder(android.R.drawable.ic_menu_camera)
                 .error(android.R.drawable.ic_menu_report_image)
                 .listener(new RequestListener<android.graphics.drawable.Drawable>() {
                     @Override
                     public boolean onLoadFailed(GlideException e, Object model, Target<android.graphics.drawable.Drawable> target, boolean isFirstResource) {
-                        Log.e(TAG, "Failed to load image from: " + photoUrl, e);
-                        Toast.makeText(MainActivity.this, "Ошибка загрузки фото", Toast.LENGTH_LONG).show();
+                        Log.e(TAG, "Failed to load image from: " + finalPhotoUrl, e);
+                        Log.e(TAG, "Error details: " + (e != null ? e.getMessage() : "null"));
+                        if (e != null && e.getRootCauses() != null) {
+                            for (Throwable t : e.getRootCauses()) {
+                                Log.e(TAG, "Root cause: " + t.getMessage(), t);
+                            }
+                        }
+                        Toast.makeText(MainActivity.this, "Ошибка загрузки фото: " + (e != null ? e.getMessage() : "unknown"), Toast.LENGTH_LONG).show();
                         return false;
                     }
 
                     @Override
                     public boolean onResourceReady(android.graphics.drawable.Drawable resource, Object model, Target<android.graphics.drawable.Drawable> target, com.bumptech.glide.load.DataSource dataSource, boolean isFirstResource) {
-                        Log.d(TAG, "Image loaded successfully from: " + photoUrl);
+                        Log.d(TAG, "Image loaded successfully from: " + finalPhotoUrl);
                         return false;
                     }
                 })
